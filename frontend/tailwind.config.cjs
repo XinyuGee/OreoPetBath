@@ -4,6 +4,12 @@ module.exports = {
     "./index.html",
     "./src/**/*.{js,jsx}"
   ],
-  theme: { extend: {} },
+  theme: { 
+    extend: {
+      fontFamily: {
+        cute: ['"Fredoka"', 'sans-serif'],
+      },
+    } 
+  },
   plugins: [],
 };
