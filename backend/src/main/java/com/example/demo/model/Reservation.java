@@ -17,7 +17,7 @@ public class Reservation {
   @ManyToOne(optional = false)
   private Pet pet;
   @ManyToOne(optional = false)
-  private Service service;
+  private ServiceOffering service;
 
   @Column(nullable = false)
   private LocalDateTime reservationTime;
