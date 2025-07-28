@@ -10,16 +10,16 @@ public record ServiceOfferingDTO(
         String name,
         String description,
         String allowedDays,
-        LocalTime startTime,
-        LocalTime endTime) {
+        String startTime,
+        String endTime) {
     public static ServiceOfferingDTO from(ServiceOffering s) {
         return new ServiceOfferingDTO(
                 s.getId(),
                 s.getCode(),
                 s.getName(),
                 s.getDescription(),
-                String.join(",", s.getAllowedDays()),
-                s.getStartTime(),
-                s.getEndTime());
+                s.getAllowedDays(),
+                s.getStartTime().toString(),
+                s.getEndTime().toString());
     }
 }

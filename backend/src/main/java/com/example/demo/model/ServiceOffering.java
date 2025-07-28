@@ -26,6 +26,7 @@ public class ServiceOffering {
 
   @Column(name = "allowed_days")
   private String allowedDays;
+
   private LocalTime startTime;
   private LocalTime endTime;
 }

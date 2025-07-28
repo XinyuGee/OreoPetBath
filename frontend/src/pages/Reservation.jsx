@@ -1,13 +1,59 @@
 import { useEffect, useState } from "react";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
-const dayName = (yyyyMmDd) => new Date(yyyyMmDd).toLocaleDateString("en-US",{weekday:"long"}).toUpperCase();
+/* ─── helpers ────────────────────────────────────────────────────────── */
+
+const isoToLocalDate = (iso) => {
+  const [y, m, d] = iso.split("-").map(Number);
+  return new Date(y, m - 1, d);
+};
+
+const dayName = (input) => {
+  const dateObj = input instanceof Date ? input : isoToLocalDate(input);
+  return dateObj
+    .toLocaleDateString("en-US", { weekday: "long" })
+    .toUpperCase();
+};
+
+const formatLocalIsoDate = (date) => {
+  const year  = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day   = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`; 
+};
+
 const nextAllowedDate = (allowed) => {
-  let d = new Date();                      // today
-  for (let i=0;i<14;i++){                  // look ahead max 2 wks
-    if (allowed.includes(dayName(d.toISOString().slice(0,10)))) break;
-    d.setDate(d.getDate()+1);
+  let d = new Date();
+  d.setHours(12, 0, 0, 0);             
+  for (let i = 0; i < 14; i++) {
+    if (allowed.includes(dayName(d))) break;
+    d.setDate(d.getDate() + 1);
   }
-  return d.toISOString().slice(0,10);
+  return d;                            
+}
+
+const weekdayNameToIndex = {
+  SUNDAY: 0,
+  MONDAY: 1,
+  TUESDAY: 2,
+  WEDNESDAY: 3,
+  THURSDAY: 4,
+  FRIDAY: 5,
+  SATURDAY: 6,
+};
+
+const generateTimeSlots = (start, end, stepMinutes = 30) => {
+  if (!start || !end) return [];
+  const [sh, sm] = start.split(":").map(Number);
+  const [eh, em] = end.split(":").map(Number);
+  const slots = [];
+  for (let t = sh * 60 + sm; t <= eh * 60 + em; t += stepMinutes) {
+    const hh = String(Math.floor(t / 60)).padStart(2, "0");
+    const mm = String(t % 60).padStart(2, "0");
+    slots.push(`${hh}:${mm}`);
+  }
+  return slots;
 };
 
 /**
@@ -19,7 +65,6 @@ const nextAllowedDate = (allowed) => {
  *    • POST /api/reservations    (with petId, serviceId, reservationTime, notes)
  */
 export default function Reservation() {
-  /* ------------------------------ state ------------------------------ */
   const [formData, setFormData] = useState({
     owner: "",
     contact: "",
@@ -32,13 +77,12 @@ export default function Reservation() {
     serviceId: "",
     notes: "",
   });
-  const [services, setServices]   = useState([]);
-  const [loading, setLoading]     = useState(false);
-  const [msg, setMsg]             = useState(null);
-  const [rule, setRule]           = useState(null);
-  const [fieldErr, setFieldErr]   = useState({ date:false, time:false });
+  const [services, setServices] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [msg, setMsg] = useState(null);
+  const [rule, setRule] = useState(null);
+  const [fieldErr, setFieldErr] = useState({ date: false, time: false });
 
-  /* ------------------------- fetch services ------------------------- */
   useEffect(() => {
     const norm = (s) => s.split(',').map(d => d.trim());
     fetch("/api/services")
@@ -52,25 +96,26 @@ export default function Reservation() {
       .catch(() => setServices([]));
   }, []);
 
-  /* -------------------------- handlers ----------------------------- */
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
 
     if (e.target.name === "date" && rule) {
       const bad = !rule.allowedDays.includes(dayName(e.target.value));
-      setFieldErr(f => ({ ...f, date: bad }));
+      setFieldErr((f) => ({ ...f, date: bad }));
     }
     if (e.target.name === "time" && rule) {
-      const bad = (rule.startTime && e.target.value < rule.startTime) ||
-                  (rule.endTime   && e.target.value > rule.endTime);
-      setFieldErr(f => ({ ...f, time: bad }));
+      const bad =
+        (rule.startTime && e.target.value < rule.startTime) ||
+        (rule.endTime && e.target.value > rule.endTime);
+      setFieldErr((f) => ({ ...f, time: bad }));
     }
 
     if (e.target.name === "serviceId") {
-      const srv = services.find(s => String(s.id) === e.target.value);
+      const srv = services.find((s) => String(s.id) === e.target.value);
       setRule(srv ?? null);
-      setFieldErr({ date:false, time:false });
-      setFormData(f => ({ ...f, date:"", time:"" }));
+      setFieldErr({ date: false, time: false });
+      const next = srv ? nextAllowedDate(srv.allowedDays) : null;
+      setFormData((f) => ({ ...f, date: next, time: "" }));
     }
   };
 
@@ -78,7 +123,6 @@ export default function Reservation() {
     e.preventDefault();
     setMsg(null);
 
-    // basic client‑side required fields
     const required = ["date", "time", "serviceId", "owner", "contact", "name", "species"];
     if (required.some(k => !formData[k])) {
       setMsg({ type: "error", text: "Please fill in all required fields." });
@@ -87,7 +131,6 @@ export default function Reservation() {
 
     setLoading(true);
     try {
-      /* 1️⃣  Create / update pet */
       const petRes = await fetch("/api/pets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -103,8 +146,7 @@ export default function Reservation() {
       if (!petRes.ok) throw new Error("Failed to save pet");
       const pet = await petRes.json();
 
-      /* 2️⃣  Create reservation */
-      const reservationTime = `${formData.date}T${formData.time}`; // yyyy‑MM‑ddTHH:mm
+      const reservationTime = `${formatLocalIsoDate(formData.date)}T${formData.time}`;
       const resRes = await fetch("/api/reservations", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -115,20 +157,18 @@ export default function Reservation() {
           notes: formData.notes,
         }),
       });
-      
+
       if (!resRes.ok) {
         const body = await resRes.json().catch(() => null);
-        const niceMsg = 
+        const niceMsg =
           body?.message ||
           (resRes.status === 409
-          ? "The chosen slot overlaps an existing reservation."
-          : `Reservation failed (HTTP ${resRes.status})`);
+            ? "The chosen slot overlaps an existing reservation."
+            : `Reservation failed (HTTP ${resRes.status})`);
         throw new Error(niceMsg);
       }
 
       setMsg({ type: "success", text: "Reservation submitted! We will contact you soon 🐾" });
-      // optional: reset form
-      // setFormData({...initialState});
     } catch (err) {
       setMsg({ type: "error", text: err.message });
     } finally {
@@ -136,7 +176,6 @@ export default function Reservation() {
     }
   };
 
-  /* ----------------------------- UI ----------------------------- */
   return (
     <section className="bg-[#fefaf6] min-h-screen py-12 px-4 font-cute text-[#4b3832]">
       <h2 className="text-4xl font-bold text-center mb-10">Reservation 预约登记</h2>
@@ -172,42 +211,6 @@ export default function Reservation() {
           />
         </div>
 
-        {/* Date and Time */}
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <label className="block font-semibold mb-1">📅 Reservation Date 预约日期</label>
-            <input
-              type="date"
-              name="date"
-              value={formData.date}
-              onChange={handleChange}
-              required
-              className={`w-full border rounded-md p-2 ${fieldErr.date?'border-red-500':''}`}
-              min={rule ? nextAllowedDate(rule.allowedDays) : undefined}
-              onBlur={(ev)=>{
-                if(rule && !rule.allowedDays.includes(dayName(ev.target.value))){
-                  setFormData(f=>({...f, date:""}));
-                }
-              }}
-            />
-          </div>
-          <div className="flex-1">
-            <label className="block font-semibold mb-1">⏰ Time 时间</label>
-            <input
-              type="time"
-              name="time"
-              value={formData.time}
-              onChange={handleChange}
-              required
-              className={`w-full border rounded-md p-2 ${fieldErr.time?'border-red-500':''}`}
-              min={rule?.startTime}
-              max={rule?.endTime}
-              step="1800"
-            />
-          </div>
-        </div>
-
-        {/* Pet Info */}
         <div>
           <label className="block font-semibold mb-1">🐾 Pet Name 宠物名字</label>
           <input
@@ -274,6 +277,64 @@ export default function Reservation() {
               <option key={s.id} value={s.id}>{s.name} - {s.description}</option>
             ))}
           </select>
+        </div>
+
+        <div className="flex flex-col md:flex-row gap-4">
+          <div className="flex-1">
+            <label className="block font-semibold mb-1">
+              📅 Reservation Date 预约日期
+            </label>
+            <div className="border rounded-md p-2 bg-white">
+              <DayPicker
+                mode="single"
+                selected={formData.date || undefined}
+                onSelect={(date) => {
+                  if (!date) return;
+                  const noon = new Date(date);
+                  noon.setHours(12, 0, 0, 0);
+                  const valid =
+                    rule && rule.allowedDays.includes(dayName(noon));
+                  setFormData((f) => ({
+                    ...f,
+                    date: valid ? noon : null,
+                  }));
+                  setFieldErr((f) => ({ ...f, date: !valid }));
+                }}
+                disabled={(d) => {
+                  if (!rule) return true;
+                  return !rule.allowedDays
+                    .map((w) => weekdayNameToIndex[w])
+                    .includes(d.getDay());
+                }}
+                fromDate={new Date()}
+                toDate={
+                  new Date(new Date().setDate(new Date().getDate() + 13))
+                }
+              />
+            </div>
+            {fieldErr.date && (
+              <p className="text-red-600 mt-1 text-sm">
+                Selected day is not available for this service.
+              </p>
+            )}
+          </div>
+
+        
+          <div className="flex-1">
+            <label className="block font-semibold mb-1">⏰ Time 时间</label>
+            <select
+              name="time"
+              value={formData.time}
+              onChange={handleChange}
+              required
+              className={`w-full border rounded-md p-2 ${fieldErr.time ? 'border-red-500' : ''}`}
+            >
+              <option value="">Select a time…</option>
+              {rule && generateTimeSlots(rule.startTime, rule.endTime).map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+          </div>
         </div>
 
         <div>

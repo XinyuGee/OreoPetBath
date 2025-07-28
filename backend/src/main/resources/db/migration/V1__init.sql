@@ -9,19 +9,19 @@ CREATE TABLE pet (
 );
 
 CREATE TABLE service (
-  id            bigserial PRIMARY KEY,
-  code          varchar(20) NOT NULL,
-  name          varchar(60) NOT NULL,
-  description   varchar     NOT NULL,
-  allowed_days  varchar(100),
-  start_time    time,
-  end_time      time
+  id            bigserial     PRIMARY KEY,
+  code          varchar(20)   NOT NULL,
+  name          varchar(60)   NOT NULL,
+  description   varchar       NOT NULL,
+  allowed_days  varchar(100)  NOT NULL,
+  start_time    time          NOT NULL,
+  end_time      time          NOT NULL
 );
 
 INSERT INTO service (id, code, name, description, allowed_days, start_time, end_time) VALUES
-  (1, 'BOARD', 'Pet Boarding', '寄养服务',           'MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY', '10:00', '19:00'),
-  (2, 'GROOM', 'Pet Grooming', '全套美容',           'THURSDAY,SUNDAY',                                          '10:00', '18:00'),
-  (3, 'WASH' , 'Pet Washing',  '单次洗护',           'MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY',  '10:00', '18:00');
+  (1, 'BOARD', 'Pet Boarding', '寄养服务', 'MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY', '10:00', '19:00'),
+  (2, 'GROOM', 'Pet Grooming', '全套美容', 'THURSDAY,SUNDAY',                                          '10:00', '18:00'),
+  (3, 'WASH' , 'Pet Washing',  '单次洗护', 'MONDAY,TUESDAY,WEDNESDAY,THURSDAY,FRIDAY,SATURDAY,SUNDAY', '10:00', '18:00');
 
 CREATE TABLE reservation (
     id                  BIGSERIAL PRIMARY KEY,
