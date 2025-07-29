@@ -6,6 +6,7 @@ import com.example.demo.service.ReservationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,5 +41,15 @@ public class ReservationController {
   @GetMapping("/pet/{petId}")
   public List<Reservation> byPet(@PathVariable Long petId) {
     return svc.findByPetId(petId);
+  }
+
+  @PatchMapping("/{id}/cancel")
+  @ResponseStatus(HttpStatus.NO_CONTENT)
+  public void cancel(@PathVariable long id,
+      @RequestBody CancelReservationDto body) {
+    svc.cancel(id, body.phone());
+  }
+
+  public record CancelReservationDto(String phone) {
   }
 }

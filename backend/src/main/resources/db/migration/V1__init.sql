@@ -28,7 +28,10 @@ CREATE TABLE reservation (
     pet_id              BIGINT NOT NULL REFERENCES pet(id) ON DELETE CASCADE,
     service_id          BIGINT NOT NULL REFERENCES service(id),
     reservation_time    TIMESTAMP NOT NULL,
-    notes               TEXT
+    status              VARCHAR(20) NOT NULL DEFAULT 'BOOKED',
+    notes               TEXT,
+    owner_phone         VARCHAR(32) NOT NULL,
+    created_at          TIMESTAMP DEFAULT now()
 );
-
+CREATE INDEX idx_reservations_phone ON reservation (owner_phone);
 CREATE INDEX idx_reservation_time ON reservation (reservation_time);

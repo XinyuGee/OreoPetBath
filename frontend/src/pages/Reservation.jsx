@@ -56,6 +56,89 @@ const generateTimeSlots = (start, end, stepMinutes = 30) => {
   return slots;
 };
 
+/* ─── Cancel card ─────────────────────────────────────────────────────── */
+function CancelReservationCard() {
+  const [reservationId, setReservationId] = useState("");
+  const [phone, setPhone] = useState("");
+  const [msg, setMsg] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setMsg(null);
+
+    if (!reservationId || !phone) {
+      setMsg({ type: "error", text: "Reservation ID and phone are required." });
+      return;
+    }
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/reservations/${reservationId}/cancel`, {
+           method: "PATCH",
+           headers: { "Content-Type": "application/json" },
+           body: JSON.stringify({ phone }),
+       });
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        throw new Error(body.message || `Failed (HTTP ${res.status})`);
+      }
+      setMsg({ type: "success", text: "Reservation canceled ✔️" });
+      setReservationId("");
+      setPhone("");
+    } catch (err) {
+      setMsg({ type: "error", text: err.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto bg-white shadow-lg rounded-2xl p-8 space-y-4 mt-12">
+      <h3 className="text-2xl font-bold">Cancel Reservation 取消预约</h3>
+
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block font-semibold mb-1">Reservation ID 预约编号</label>
+          <input
+            type="number"
+            className="w-full border rounded-md p-2"
+            value={reservationId}
+            onChange={(e) => setReservationId(e.target.value)}
+            placeholder="e.g. 123"
+            required
+          />
+        </div>
+
+        <div>
+          <label className="block font-semibold mb-1">Phone used when booking 电话</label>
+          <input
+            type="tel"
+            className="w-full border rounded-md p-2"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            placeholder="e.g. (123) 456-7890"
+            required
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-red-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-red-500 transition-all"
+        >
+          {loading ? "Canceling…" : "Cancel Reservation 取消预约"}
+        </button>
+      </form>
+
+      {msg && (
+        <p className={`text-center ${msg.type === "error" ? "text-red-600" : "text-green-600"}`}>
+          {msg.text}
+        </p>
+      )}
+    </div>
+  );
+}
+
 /**
  * Reservation page – now wired to the Spring‑Boot backend
  * ------------------------------------------------------
@@ -168,7 +251,13 @@ export default function Reservation() {
         throw new Error(niceMsg);
       }
 
-      setMsg({ type: "success", text: "Reservation submitted! We will contact you soon 🐾" });
+      const reservation = await resRes.json();
+
+      setMsg({
+                type: "success",
+                text: `🎉 Reservation submitted!  Your ID is ${reservation.id}.
+                       Please keep it for any changes or cancellation.`,
+              });
     } catch (err) {
       setMsg({ type: "error", text: err.message });
     } finally {
@@ -366,6 +455,8 @@ export default function Reservation() {
           </p>
         )}
       </form>
+
+      <CancelReservationCard />
     </section>
   );
 }

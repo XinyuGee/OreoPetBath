@@ -7,9 +7,12 @@ import com.example.demo.model.*;
 import com.example.demo.repo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import jakarta.persistence.EntityNotFoundException;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -26,9 +29,14 @@ public class ReservationService {
     LocalDateTime start = requested.minusMinutes(props.bufferMinutes());
     LocalDateTime end = requested.plusMinutes(props.bufferMinutes());
 
-    List<Reservation> clashes = reservationRepo.findByReservationTimeBetween(start, end);
+    boolean clash = reservationRepo
+        .findByReservationTimeBetweenAndStatus(
+            start, end, ReservationStatus.BOOKED)
+        .stream()
+        .findAny()
+        .isPresent();
 
-    if (!clashes.isEmpty()) {
+    if (clash) {
       throw new BookingConflictException(
           "Another reservation is already within "
               + props.bufferMinutes() + " minutes of the requested time.");
@@ -42,6 +50,7 @@ public class ReservationService {
             .pet(pet)
             .service(service)
             .reservationTime(requested)
+            .ownerPhone(pet.getOwnerPhone())
             .notes(req.notes())
             .build());
   }
@@ -52,5 +61,20 @@ public class ReservationService {
 
   public List<Reservation> findByPetId(Long petId) {
     return reservationRepo.findByPetId(petId);
+  }
+
+  @Transactional
+  public void cancel(long id, String phone) {
+
+    Reservation r = reservationRepo.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("Reservation " + id));
+
+    if (!Objects.equals(r.getOwnerPhone(), phone))
+      throw new IllegalArgumentException("Phone number does not match");
+
+    if (r.getStatus() != ReservationStatus.BOOKED)
+      throw new IllegalStateException("Only BOOKED reservations can be canceled");
+
+    r.setStatus(ReservationStatus.CANCELED);
   }
 }
