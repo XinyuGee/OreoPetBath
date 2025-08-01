@@ -6,6 +6,7 @@ import Services from './pages/Services';
 import Pricing from './pages/Pricing';
 import Gallery from './pages/Gallery';
 import Reservation from './pages/Reservation';
+import OwnerDashboard from './pages/OwnerDashboard';
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/gallery" element={<Gallery />} />
             <Route path="/reservation" element={<Reservation />} />
+            <Route path="/owner" element={<OwnerDashboard />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
