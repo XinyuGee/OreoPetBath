@@ -2,6 +2,7 @@ package com.example.demo.service;
 
 import com.example.demo.config.ReservationProps;
 import com.example.demo.dto.ReservationRequest;
+import com.example.demo.dto.ReservationDTO;
 import com.example.demo.exception.BookingConflictException;
 import com.example.demo.model.*;
 import com.example.demo.repo.*;

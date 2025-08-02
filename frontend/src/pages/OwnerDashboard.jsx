@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 
 /**
  * OwnerDashboard – step‑1 UI scaffold (plain Tailwind, no external icons)
@@ -10,45 +10,35 @@ import { useState, useMemo } from "react";
  */
 export default function OwnerDashboard() {
   const [filters, setFilters] = useState({ phone: "", date: "" });
+  const [reservations, setReservations] = useState([]);
 
-  // TODO: replace with data fetched from backend in step‑2
-  const sampleReservations = [
-    {
-      id: 1,
-      petName: "Buddy",
-      ownerName: "Alice Smith",
-      phone: "555-1234",
-      date: "2025-08-01",
-      time: "14:00",
-      species: "Dog",
-      status: "Pending",
-    },
-    {
-      id: 2,
-      petName: "Mittens",
-      ownerName: "Bob Lee",
-      phone: "555-9876",
-      date: "2025-08-02",
-      time: "10:30",
-      species: "Cat",
-      status: "Pending",
-    },
-  ];
+  useEffect(() => {
+        fetch("/api/reservations/dashboard")
+          .then((r) => r.json())
+          .then(setReservations)
+          .catch(console.error);
+      }, []);
 
   const filteredReservations = useMemo(() => {
-    return sampleReservations.filter((r) => {
+    return reservations.filter((r) => {
       const phoneOk = filters.phone
         ? r.phone.toLowerCase().includes(filters.phone.toLowerCase())
         : true;
       const dateOk = filters.date ? r.date === filters.date : true;
       return phoneOk && dateOk;
     });
-  }, [filters]);
+  }, [filters, reservations]);
 
   const handleChange = (e) =>
     setFilters((f) => ({ ...f, [e.target.name]: e.target.value.trim() }));
 
   const clearFilters = () => setFilters({ phone: "", date: "" });
+
+  const STATUS_COLORS = {
+    BOOKED:   "bg-blue-100  text-blue-800",
+    CANCELED: "bg-yellow-100 text-yellow-800",
+    COMPLETE: "bg-green-100 text-green-800",
+  };
 
   return (
     <div className="p-6 md:p-10 space-y-6">
@@ -119,7 +109,8 @@ export default function OwnerDashboard() {
                 <td className="px-4 py-2 whitespace-nowrap">{r.time}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{r.species}</td>
                 <td className="px-4 py-2 whitespace-nowrap">
-                  <span className="inline-block rounded-full bg-yellow-100 px-2 py-0.5 text-xs font-semibold text-yellow-800">
+                  <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold text-yellow-800 ` 
+                    + (STATUS_COLORS[r.status] ?? "bg-gray-100 text-gray-800")}>
                     {r.status}
                   </span>
                 </td>

@@ -1,5 +1,6 @@
 package com.example.demo.controller;
 
+import com.example.demo.dto.ReservationDTO;
 import com.example.demo.dto.ReservationRequest;
 import com.example.demo.model.Reservation;
 import com.example.demo.service.ReservationService;
@@ -51,5 +52,29 @@ public class ReservationController {
   }
 
   public record CancelReservationDto(String phone) {
+  }
+
+  @GetMapping("/dashboard")
+  public List<ReservationDTO> dashboard(
+      @RequestParam(required = false) String phone,
+      @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date) {
+
+    return svc.findAll().stream()
+        .filter(r -> phone == null || r.getOwnerPhone().contains(phone))
+        .filter(r -> date == null || r.getReservationTime().toLocalDate().equals(date))
+        .map(this::toReservationDTO)
+        .toList();
+  }
+
+  private ReservationDTO toReservationDTO(Reservation r) {
+    return new ReservationDTO(
+        r.getId(),
+        r.getPet().getName(),
+        r.getPet().getOwnerName(),
+        r.getOwnerPhone(),
+        r.getReservationTime().toLocalDate(),
+        r.getReservationTime().toLocalTime(),
+        r.getPet().getSpecies(),
+        r.getStatus().name());
   }
 }
