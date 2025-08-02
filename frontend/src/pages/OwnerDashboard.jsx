@@ -12,6 +12,7 @@ export default function OwnerDashboard() {
   const [filters, setFilters] = useState({ phone: "", date: "" });
   const [reservations, setReservations] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
+  const [sortKeys, setSortKeys] = useState([{ key: "date", dir: "asc" }, { key: "time", dir: "asc" }, { key: "status", dir: "asc" }]);
 
   const fetchReservations = useCallback(() => {
         fetch(`/api/reservations/dashboard?ts=${Date.now()}`, { cache: "no-store" })
@@ -23,17 +24,42 @@ export default function OwnerDashboard() {
   useEffect(fetchReservations, [fetchReservations]);
 
   const filteredReservations = useMemo(() => {
-    return reservations.filter((r) => {
+    const filt = reservations.filter((r) => {
       const phoneOk = filters.phone
         ? r.phone.toLowerCase().includes(filters.phone.toLowerCase())
         : true;
       const dateOk = filters.date ? r.date === filters.date : true;
       return phoneOk && dateOk;
     });
-  }, [filters, reservations]);
+    const cmp = (v1, v2) => v1 === v2
+            ? 0 : typeof v1 === "string"
+            ? v1.localeCompare(v2) : v1 > v2
+            ? 1 : -1;
+    const compare = (a, b) => {
+      for (const { key, dir } of sortKeys) {
+        const res = cmp(a[key], b[key]);
+        if (res !== 0) return dir === "asc" ? res : -res;
+      }
+      return 0;
+    };
+    return [...filt].sort(compare);
+  }, [filters, reservations, sortKeys]);
 
   const handleChange = (e) =>
     setFilters((f) => ({ ...f, [e.target.name]: e.target.value.trim() }));
+
+  const handleSort = (key) => {
+    setSortKeys((prev) =>
+      prev.map((s) =>
+        s.key === key ? { ...s, dir: s.dir === "asc" ? "desc" : "asc" } : s
+      )
+    );
+  };
+
+  const arrow = (key) => {
+    const s = sortKeys.find((k) => k.key === key);
+    return s ? (s.dir === "asc" ? "▲" : "▼") : "";
+  };
 
   const clearFilters = () => setFilters({ phone: "", date: "" });
 
@@ -111,10 +137,19 @@ export default function OwnerDashboard() {
               <th className="px-4 py-3">Pet Name</th>
               <th className="px-4 py-3">Owner Name</th>
               <th className="px-4 py-3">Phone</th>
-              <th className="px-4 py-3">Date</th>
-              <th className="px-4 py-3">Time</th>
+              <th className="px-4 py-3 cursor-pointer select-none"
+                onClick={() => handleSort("date")}>
+                  Date {arrow("date")}
+              </th>
+              <th className="px-4 py-3 cursor-pointer select-none" 
+                onClick={() => handleSort("time")}>
+                Time {arrow("time")}
+              </th>
+              <th className="px-4 py-3 cursor-pointer select-none" 
+                onClick={() => handleSort("status")}>
+                Status {arrow("status")}
+                </th>
               <th className="px-4 py-3">Species</th>
-              <th className="px-4 py-3">Status</th>
               <th className="px-4 py-3">Notes</th>
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
@@ -127,17 +162,17 @@ export default function OwnerDashboard() {
                 <td className="px-4 py-2 whitespace-nowrap">{r.phone}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{r.date}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{r.time}</td>
-                <td className="px-4 py-2 whitespace-nowrap">{r.species}</td>
                 <td className="px-4 py-2 whitespace-nowrap">
                   <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold text-yellow-800 ` 
                     + (STATUS_COLORS[r.status] ?? "bg-gray-100 text-gray-800")}>
                     {r.status}
                   </span>
                 </td>
+                <td className="px-4 py-2 whitespace-nowrap">{r.species}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{r.notes ? (
                   <button
                     onClick={() => setSelectedNote(r.notes)}
-                   className="text-grey-300 border-0 hover:underline"
+                   className="text-grey-400 border-0 bg-transparent hover:underline"
                   >
                   {r.notes.length > 24 ? r.notes.slice(0, 24) + "…" : r.notes}
                   </button>
