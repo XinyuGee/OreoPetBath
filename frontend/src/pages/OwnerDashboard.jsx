@@ -11,6 +11,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
 export default function OwnerDashboard() {
   const [filters, setFilters] = useState({ phone: "", date: "" });
   const [reservations, setReservations] = useState([]);
+  const [selectedNote, setSelectedNote] = useState(null);
 
   const fetchReservations = useCallback(() => {
         fetch(`/api/reservations/dashboard?ts=${Date.now()}`, { cache: "no-store" })
@@ -114,6 +115,7 @@ export default function OwnerDashboard() {
               <th className="px-4 py-3">Time</th>
               <th className="px-4 py-3">Species</th>
               <th className="px-4 py-3">Status</th>
+              <th className="px-4 py-3">Notes</th>
               <th className="px-4 py-3 text-center">Actions</th>
             </tr>
           </thead>
@@ -132,11 +134,20 @@ export default function OwnerDashboard() {
                     {r.status}
                   </span>
                 </td>
+                <td className="px-4 py-2 whitespace-nowrap">{r.notes ? (
+                  <button
+                    onClick={() => setSelectedNote(r.notes)}
+                   className="text-grey-300 border-0 hover:underline"
+                  >
+                  {r.notes.length > 24 ? r.notes.slice(0, 24) + "…" : r.notes}
+                  </button>
+                ): <span className="text-gray-400">—</span>}
+                </td>
                 <td className="px-4 py-2 text-center">
                 {r.status !== "COMPLETE" && (
                   <button
                     onClick={() => markComplete(r.id) }
-                    className="rounded-md bg-green-500 px-3 py-1 text-sm font-medium text-white hover:bg-green-600"
+                    className="rounded-md bg-green-500 px-3 py-1 text-sm font-medium text-white border-0 hover:bg-green-600"
                   >
                     Complete
                   </button>
@@ -147,6 +158,27 @@ export default function OwnerDashboard() {
           </tbody>
         </table>
       </div>
+      {selectedNote && (
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+        <div
+          className="
+            bg-white w-[min(90%,28rem)] max-h-[85vh] rounded-xl shadow-xl p-6 flex flex-col"
+        >
+          <h3 className="text-lg font-semibold">Special Notes</h3>
+          <div className="mt-3 mb-4 flex-1 overflow-y-auto">
+            <p className="whitespace-pre-line break-words">{selectedNote}</p>
+          </div>
+          <button
+            onClick={() => setSelectedNote(null)}
+            className="self-end inline-flex items-center px-4 py-1.5
+                      rounded-lg bg-red-500 text-white text-sm
+                      hover:bg-red-700"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+    )}
     </div>
   );
 }

@@ -80,6 +80,7 @@ public class ReservationController {
         r.getReservationTime().toLocalDate(),
         r.getReservationTime().toLocalTime(),
         r.getPet().getSpecies(),
-        r.getStatus().name());
+        r.getStatus().name(),
+        r.getNotes());
   }
 }
