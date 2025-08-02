@@ -78,4 +78,11 @@ public class ReservationService {
 
     r.setStatus(ReservationStatus.CANCELED);
   }
+
+  @Transactional
+  public void complete(Long id) {
+    Reservation r = reservationRepo.findById(id)
+        .orElseThrow(() -> new EntityNotFoundException("Reservation " + id));
+    r.setStatus(ReservationStatus.COMPLETED);
+  }
 }

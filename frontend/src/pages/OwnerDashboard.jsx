@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 
 /**
  * OwnerDashboard – step‑1 UI scaffold (plain Tailwind, no external icons)
@@ -12,12 +12,14 @@ export default function OwnerDashboard() {
   const [filters, setFilters] = useState({ phone: "", date: "" });
   const [reservations, setReservations] = useState([]);
 
-  useEffect(() => {
-        fetch("/api/reservations/dashboard")
+  const fetchReservations = useCallback(() => {
+        fetch(`/api/reservations/dashboard?ts=${Date.now()}`, { cache: "no-store" })
           .then((r) => r.json())
           .then(setReservations)
           .catch(console.error);
       }, []);
+
+  useEffect(fetchReservations, [fetchReservations]);
 
   const filteredReservations = useMemo(() => {
     return reservations.filter((r) => {
@@ -37,8 +39,24 @@ export default function OwnerDashboard() {
   const STATUS_COLORS = {
     BOOKED:   "bg-blue-100  text-blue-800",
     CANCELED: "bg-yellow-100 text-yellow-800",
-    COMPLETE: "bg-green-100 text-green-800",
+    COMPLETED: "bg-green-100 text-green-800",
   };
+
+  const markComplete = async(id) =>{
+    setReservations((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, status: "COMPLETED" } : r))
+    );
+    try{
+      const res = await fetch(`/api/reservations/${id}/complete`, { method: "PATCH" });
+      if (!res.ok) throw new Error("This Reservation has already been 'Completed'");
+      await res.json();
+    } catch (err) {
+      console.error(err);
+    }finally {
+      fetchReservations();
+    }
+
+  }
 
   return (
     <div className="p-6 md:p-10 space-y-6">
@@ -115,12 +133,14 @@ export default function OwnerDashboard() {
                   </span>
                 </td>
                 <td className="px-4 py-2 text-center">
+                {r.status !== "COMPLETE" && (
                   <button
-                    disabled
-                    className="inline-flex justify-center items-center px-3 py-1.5 border border-gray-300 rounded-lg text-xs font-medium text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50"
+                    onClick={() => markComplete(r.id) }
+                    className="rounded-md bg-green-500 px-3 py-1 text-sm font-medium text-white hover:bg-green-600"
                   >
                     Complete
                   </button>
+                )}
                 </td>
               </tr>
             ))}

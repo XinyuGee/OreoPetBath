@@ -51,6 +51,11 @@ public class ReservationController {
     svc.cancel(id, body.phone());
   }
 
+  @PatchMapping("/{id}/complete")
+  public void complete(@PathVariable Long id) {
+    svc.complete(id);
+  }
+
   public record CancelReservationDto(String phone) {
   }
 
