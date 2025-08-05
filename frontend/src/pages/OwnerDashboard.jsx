@@ -4,7 +4,7 @@ import { useState, useMemo, useEffect, useCallback } from "react";
  * OwnerDashboard 
  * @todo: Adust the time rule so that boarding is no conflict
  * @todo: Ajust the refresh of the page when new data is in
- * @todo: Ajust the board so that service type can be seen
+ * @todo: Adjust so that only booded can be marked as complete
  * @todo: Add in a user login for security
  */
 export default function OwnerDashboard() {
@@ -180,7 +180,7 @@ export default function OwnerDashboard() {
                 ): <span className="text-gray-400">—</span>}
                 </td>
                 <td className="px-4 py-2 text-center">
-                {r.status !== "COMPLETE" && (
+                {r.status !== "COMPLETED" && r.status !== "CANCELED" && (
                   <button
                     onClick={() => markComplete(r.id) }
                     className="rounded-md bg-green-500 px-3 py-1 text-sm font-medium text-white border-0 hover:bg-green-600"
