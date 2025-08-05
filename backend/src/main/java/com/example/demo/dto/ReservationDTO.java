@@ -12,5 +12,6 @@ public record ReservationDTO(
         LocalTime time,
         String species,
         String status,
+        String service,
         String notes) {
 }

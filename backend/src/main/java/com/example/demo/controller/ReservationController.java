@@ -81,6 +81,7 @@ public class ReservationController {
         r.getReservationTime().toLocalTime(),
         r.getPet().getSpecies(),
         r.getStatus().name(),
+        r.getService().getDescription(),
         r.getNotes());
   }
 }

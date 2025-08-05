@@ -1,12 +1,11 @@
 import { useState, useMemo, useEffect, useCallback } from "react";
 
 /**
- * OwnerDashboard – step‑1 UI scaffold (plain Tailwind, no external icons)
- * -------------------------------------------------------------------
- * ‣ Displays filter controls (phone number & date).
- * ‣ Shows a read‑only table of reservations with a placeholder
- *   "Complete" button per row.
- * ‣ Absolutely zero third‑party UI libraries – just React + Tailwind.
+ * OwnerDashboard 
+ * @todo: Adust the time rule so that boarding is no conflict
+ * @todo: Ajust the refresh of the page when new data is in
+ * @todo: Ajust the board so that service type can be seen
+ * @todo: Add in a user login for security
  */
 export default function OwnerDashboard() {
   const [filters, setFilters] = useState({ phone: "", date: "" });
@@ -88,14 +87,14 @@ export default function OwnerDashboard() {
   return (
     <div className="p-6 md:p-10 space-y-6">
       <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
-        Reservation Dashboard
+        预约面板
       </h2>
 
       {/* ───────── Filter Panel ───────── */}
       <div className="bg-white shadow-lg rounded-2xl p-6 grid gap-4 md:grid-cols-[repeat(auto-fit,minmax(220px,1fr))] items-end">
         <div className="flex flex-col gap-1">
           <label htmlFor="phone" className="text-sm font-medium">
-            Phone #
+            电话#
           </label>
           <input
             id="phone"
@@ -109,7 +108,7 @@ export default function OwnerDashboard() {
 
         <div className="flex flex-col gap-1">
           <label htmlFor="date" className="text-sm font-medium">
-            Date
+            日期
           </label>
           <input
             id="date"
@@ -125,7 +124,7 @@ export default function OwnerDashboard() {
           onClick={clearFilters}
           className="mt-4 md:mt-0 inline-flex justify-center items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
         >
-          Clear Filters
+          清除筛选
         </button>
       </div>
 
@@ -134,24 +133,25 @@ export default function OwnerDashboard() {
         <table className="min-w-full text-sm">
           <thead className="bg-gray-100 text-left text-xs uppercase tracking-wider select-none">
             <tr>
-              <th className="px-4 py-3">Pet Name</th>
-              <th className="px-4 py-3">Owner Name</th>
-              <th className="px-4 py-3">Phone</th>
+              <th className="px-4 py-3">宠物名字</th>
+              <th className="px-4 py-3">主人名字</th>
+              <th className="px-4 py-3">电话号码</th>
               <th className="px-4 py-3 cursor-pointer select-none"
                 onClick={() => handleSort("date")}>
-                  Date {arrow("date")}
+                  预约日期 {arrow("date")}
               </th>
               <th className="px-4 py-3 cursor-pointer select-none" 
                 onClick={() => handleSort("time")}>
-                Time {arrow("time")}
+                预约时间 {arrow("time")}
               </th>
               <th className="px-4 py-3 cursor-pointer select-none" 
                 onClick={() => handleSort("status")}>
-                Status {arrow("status")}
+                预约状态 {arrow("status")}
                 </th>
-              <th className="px-4 py-3">Species</th>
-              <th className="px-4 py-3">Notes</th>
-              <th className="px-4 py-3 text-center">Actions</th>
+              <th className="px-4 py-3">宠物品种</th>
+              <th className="px-4 py-3">预约服务</th>
+              <th className="px-4 py-3">特殊提醒</th>
+              <th className="px-4 py-3 text-center">完成</th>
             </tr>
           </thead>
           <tbody>
@@ -169,6 +169,7 @@ export default function OwnerDashboard() {
                   </span>
                 </td>
                 <td className="px-4 py-2 whitespace-nowrap">{r.species}</td>
+                <td className="px-4 py-2 whitespace-nowrap">{r.service}</td>
                 <td className="px-4 py-2 whitespace-nowrap">{r.notes ? (
                   <button
                     onClick={() => setSelectedNote(r.notes)}
@@ -184,7 +185,7 @@ export default function OwnerDashboard() {
                     onClick={() => markComplete(r.id) }
                     className="rounded-md bg-green-500 px-3 py-1 text-sm font-medium text-white border-0 hover:bg-green-600"
                   >
-                    Complete
+                    完成
                   </button>
                 )}
                 </td>
@@ -199,7 +200,7 @@ export default function OwnerDashboard() {
           className="
             bg-white w-[min(90%,28rem)] max-h-[85vh] rounded-xl shadow-xl p-6 flex flex-col"
         >
-          <h3 className="text-lg font-semibold">Special Notes</h3>
+          <h3 className="text-lg font-semibold">特殊提醒</h3>
           <div className="mt-3 mb-4 flex-1 overflow-y-auto">
             <p className="whitespace-pre-line break-words">{selectedNote}</p>
           </div>
@@ -209,7 +210,7 @@ export default function OwnerDashboard() {
                       rounded-lg bg-red-500 text-white text-sm
                       hover:bg-red-700"
           >
-            Close
+            关闭
           </button>
         </div>
       </div>
