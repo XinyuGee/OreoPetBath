@@ -1,8 +1,8 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from "react";
+import {apiFetch} from "../lib/api"
 
 /**
- * OwnerDashboard 
- * @todo: Ajust the refresh of the page when new data is in
+ * OwnerDashboard  
  * @todo: Add in a user login for security
  */
 
@@ -19,7 +19,7 @@ export default function OwnerDashboard() {
     if (fetching.current) return;
     fetching.current = true;
     try{
-      const res = await fetch(`/api/reservations/dashboard?ts=${Date.now()}`, { cache: "no-store" });
+      const res = await apiFetch(`/api/reservations/dashboard?ts=${Date.now()}`, { cache: "no-store" });
       const data = await res.json();
       setReservations(data);
       setLastUpdated(new Date());
@@ -92,7 +92,7 @@ export default function OwnerDashboard() {
       prev.map((r) => (r.id === id ? { ...r, status: "COMPLETED" } : r))
     );
     try{
-      const res = await fetch(`/api/reservations/${id}/complete`, { method: "PATCH" });
+      const res = await apiFetch(`/api/reservations/${id}/complete`, { method: "PATCH" });
       if (!res.ok) throw new Error("This Reservation has already been 'Completed'");
       await res.json();
     } catch (err) {

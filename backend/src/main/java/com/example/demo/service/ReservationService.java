@@ -25,25 +25,26 @@ public class ReservationService {
   private final ReservationProps props;
 
   public Reservation create(ReservationRequest req) {
-
-    LocalDateTime requested = req.reservationTime();
-    LocalDateTime start = requested.minusMinutes(props.bufferMinutes());
-    LocalDateTime end = requested.plusMinutes(props.bufferMinutes());
-
-    boolean clash = reservationRepo
-        .findByReservationTimeBetweenAndStatus(
-            start, end, ReservationStatus.BOOKED)
-        .stream()
-        .findAny()
-        .isPresent();
-
-    if (clash) {
-      throw new BookingConflictException(
-          "Another reservation is already within the requested time.");
-    }
-
     var pet = petRepo.findById(req.petId()).orElseThrow();
     var service = serviceRepo.findById(req.serviceId()).orElseThrow();
+    String noConflictService = "BOARD";
+
+    LocalDateTime requested = req.reservationTime();
+    boolean isBoarding = noConflictService.equalsIgnoreCase(service.getCode());
+
+    if (!isBoarding) {
+      LocalDateTime start = requested.minusMinutes(props.bufferMinutes());
+      LocalDateTime end = requested.plusMinutes(props.bufferMinutes());
+
+      boolean clash = reservationRepo
+          .existsByReservationTimeBetweenAndStatusAndService_CodeNot(
+              start, end, ReservationStatus.BOOKED, noConflictService);
+
+      if (clash) {
+        throw new BookingConflictException(
+            "Another reservation is already within the requested time.");
+      }
+    }
 
     return reservationRepo.save(
         Reservation.builder()
@@ -51,6 +52,7 @@ public class ReservationService {
             .service(service)
             .reservationTime(requested)
             .ownerPhone(pet.getOwnerPhone())
+            .status(ReservationStatus.BOOKED)
             .notes(req.notes())
             .build());
   }

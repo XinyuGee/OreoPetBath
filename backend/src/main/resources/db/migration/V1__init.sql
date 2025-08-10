@@ -8,6 +8,13 @@ CREATE TABLE pet (
     owner_phone     VARCHAR(30)  NOT NULL
 );
 
+CREATE TABLE users (
+  id                BIGSERIAL PRIMARY KEY,
+  username          VARCHAR(64)  NOT NULL UNIQUE,
+  password_hash     VARCHAR(255) NOT NULL,
+  role              VARCHAR(32)  NOT NULL
+);
+
 CREATE TABLE service (
   id            bigserial     PRIMARY KEY,
   code          varchar(20)   NOT NULL,

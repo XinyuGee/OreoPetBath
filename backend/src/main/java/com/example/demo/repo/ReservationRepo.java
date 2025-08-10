@@ -2,6 +2,7 @@ package com.example.demo.repo;
 
 import com.example.demo.model.Reservation;
 import com.example.demo.model.ReservationStatus;
+import com.example.demo.model.ServiceOffering;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -17,4 +18,10 @@ public interface ReservationRepo extends JpaRepository<Reservation, Long> {
       LocalDateTime start,
       LocalDateTime end,
       ReservationStatus status);
+
+  boolean existsByReservationTimeBetweenAndStatusAndService_CodeNot(
+      LocalDateTime start,
+      LocalDateTime end,
+      ReservationStatus status,
+      String serviceExcluded);
 }

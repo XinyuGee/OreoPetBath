@@ -12,6 +12,9 @@ services:
 
   backend:
     build: ../backend
+    environment:
+      - APP_JWT_SECRET=${JWT_SECRET:-tlymOFHvwIjEYg+DD37UMro/K9qqdhKbkgT3D1rwtb/Mrzi+6lG2VRWnbmphLlX7s}
+      - APP_JWT_TTLMILLIS=43200000
     depends_on:
       - db
     ports:
