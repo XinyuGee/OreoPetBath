@@ -39,8 +39,7 @@ public class ReservationService {
 
     if (clash) {
       throw new BookingConflictException(
-          "Another reservation is already within "
-              + props.bufferMinutes() + " minutes of the requested time.");
+          "Another reservation is already within the requested time.");
     }
 
     var pet = petRepo.findById(req.petId()).orElseThrow();

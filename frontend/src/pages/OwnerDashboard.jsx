@@ -4,7 +4,6 @@ import { useState, useMemo, useEffect, useCallback } from "react";
  * OwnerDashboard 
  * @todo: Adust the time rule so that boarding is no conflict
  * @todo: Ajust the refresh of the page when new data is in
- * @todo: Adjust so that only booded can be marked as complete
  * @todo: Add in a user login for security
  */
 export default function OwnerDashboard() {
