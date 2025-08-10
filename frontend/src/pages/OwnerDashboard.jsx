@@ -1,25 +1,45 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 
 /**
  * OwnerDashboard 
- * @todo: Adust the time rule so that boarding is no conflict
  * @todo: Ajust the refresh of the page when new data is in
  * @todo: Add in a user login for security
  */
+
+const AUTO_REFRESH_TIME = 10_000;
 export default function OwnerDashboard() {
   const [filters, setFilters] = useState({ phone: "", date: "" });
   const [reservations, setReservations] = useState([]);
   const [selectedNote, setSelectedNote] = useState(null);
+  const setLastUpdated = useState(null);
   const [sortKeys, setSortKeys] = useState([{ key: "date", dir: "asc" }, { key: "time", dir: "asc" }, { key: "status", dir: "asc" }]);
+  const fetching = useRef(false);
 
-  const fetchReservations = useCallback(() => {
-        fetch(`/api/reservations/dashboard?ts=${Date.now()}`, { cache: "no-store" })
-          .then((r) => r.json())
-          .then(setReservations)
-          .catch(console.error);
-      }, []);
+  const fetchReservations = useCallback(async() => {
+    if (fetching.current) return;
+    fetching.current = true;
+    try{
+      const res = await fetch(`/api/reservations/dashboard?ts=${Date.now()}`, { cache: "no-store" });
+      const data = await res.json();
+      setReservations(data);
+      setLastUpdated(new Date());
+    }catch (e) {
+      console.error(e);
+    }finally {
+      fetching.current = false;
+    }
+  }, []);
 
   useEffect(fetchReservations, [fetchReservations]);
+
+  useEffect(() => {
+    const tick = () => {
+      if (!document.hidden) fetchReservations();
+    };
+    const id = setInterval(tick, AUTO_REFRESH_TIME);
+    return () => clearInterval(id);
+  }, [fetchReservations]);
+    
 
   const filteredReservations = useMemo(() => {
     const filt = reservations.filter((r) => {
