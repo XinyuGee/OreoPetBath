@@ -34,6 +34,7 @@ dependencies {
 	runtimeOnly 'org.postgresql:postgresql'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'
 	testImplementation 'org.springframework.security:spring-security-test'
+	testImplementation 'com.h2database:h2'
 	testCompileOnly 'org.projectlombok:lombok:1.18.32'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	compileOnly  'org.projectlombok:lombok:1.18.32'
@@ -45,9 +46,29 @@ dependencies {
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }
-// tasks.named('test') {
-// 	useJUnitPlatform()
-// }
 tasks.named('test') {
-    enabled = false
+	useJUnitPlatform()
+	
+	// Show verbose test output like pytest/JUnit
+	testLogging {
+		events "passed", "skipped", "failed"
+		exceptionFormat "full"
+		showExceptions = true
+		showCauses = true
+		showStackTraces = true
+		
+		// Display summary at the end (like pytest)
+		afterSuite { desc, result ->
+			if (!desc.parent) {
+				def output = "${result.resultType} (${result.testCount} tests, ${result.successfulTestCount} passed, ${result.failedTestCount} failed, ${result.skippedTestCount} skipped)"
+				def repeatLength = output.length() + 4
+				println('\n' + ('=' * repeatLength))
+				println('|  ' + output + '  |')
+				println('=' * repeatLength + '\n')
+			}
+		}
+	}
 }
+// tasks.named('test') {
+//     enabled = false
+// }
