@@ -2,12 +2,12 @@ package com.example.demo.service;
 
 import com.example.demo.config.ReservationProps;
 import com.example.demo.dto.ReservationRequest;
-import com.example.demo.dto.ReservationDTO;
 import com.example.demo.exception.BookingConflictException;
 import com.example.demo.model.*;
 import com.example.demo.repo.*;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional;
 import jakarta.persistence.EntityNotFoundException;
 
@@ -24,6 +24,7 @@ public class ReservationService {
   private final ServiceOfferingRepo serviceRepo;
   private final ReservationProps props;
 
+  @Transactional(isolation = Isolation.SERIALIZABLE)
   public Reservation create(ReservationRequest req) {
     var pet = petRepo.findById(req.petId()).orElseThrow();
     var service = serviceRepo.findById(req.serviceId()).orElseThrow();
@@ -36,6 +37,7 @@ public class ReservationService {
       LocalDateTime start = requested.minusMinutes(props.bufferMinutes());
       LocalDateTime end = requested.plusMinutes(props.bufferMinutes());
 
+      // Use pessimistic locking to prevent concurrent bookings
       boolean clash = reservationRepo
           .existsByReservationTimeBetweenAndStatusAndService_CodeNot(
               start, end, ReservationStatus.BOOKED, noConflictService);
@@ -67,8 +69,8 @@ public class ReservationService {
 
   @Transactional
   public void cancel(long id, String phone) {
-
-    Reservation r = reservationRepo.findById(id)
+    // Use pessimistic locking to prevent concurrent modifications
+    Reservation r = reservationRepo.findByIdWithLock(id)
         .orElseThrow(() -> new EntityNotFoundException("Reservation " + id));
 
     if (!Objects.equals(r.getOwnerPhone(), phone))
@@ -78,12 +80,15 @@ public class ReservationService {
       throw new IllegalStateException("Only BOOKED reservations can be canceled");
 
     r.setStatus(ReservationStatus.CANCELED);
+    // JPA will automatically save due to @Transactional and dirty checking
   }
 
   @Transactional
   public void complete(Long id) {
-    Reservation r = reservationRepo.findById(id)
+    // Use pessimistic locking to prevent concurrent modifications
+    Reservation r = reservationRepo.findByIdWithLock(id)
         .orElseThrow(() -> new EntityNotFoundException("Reservation " + id));
     r.setStatus(ReservationStatus.COMPLETED);
+    // JPA will automatically save due to @Transactional and dirty checking
   }
 }

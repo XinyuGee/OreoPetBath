@@ -35,5 +35,9 @@ public class Reservation {
   @Column(updatable = false)
   private LocalDateTime createdAt;
 
+  @Version
+  @Column(nullable = false)
+  private Long version;
+
   private String notes;
 }

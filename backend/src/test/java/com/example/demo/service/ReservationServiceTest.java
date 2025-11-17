@@ -209,20 +209,20 @@ class ReservationServiceTest {
   @Test
   void testCancel_WhenValid_ShouldCancelReservation() {
     // Given
-    when(reservationRepo.findById(1L)).thenReturn(Optional.of(testReservation));
+    when(reservationRepo.findByIdWithLock(1L)).thenReturn(Optional.of(testReservation));
 
     // When
     reservationService.cancel(1L, "123-456-7890");
 
     // Then
     assertEquals(ReservationStatus.CANCELED, testReservation.getStatus());
-    verify(reservationRepo, times(1)).findById(1L);
+    verify(reservationRepo, times(1)).findByIdWithLock(1L);
   }
 
   @Test
   void testCancel_WhenReservationNotFound_ShouldThrowEntityNotFoundException() {
     // Given
-    when(reservationRepo.findById(999L)).thenReturn(Optional.empty());
+    when(reservationRepo.findByIdWithLock(999L)).thenReturn(Optional.empty());
 
     // When & Then
     assertThrows(EntityNotFoundException.class,
@@ -232,7 +232,7 @@ class ReservationServiceTest {
   @Test
   void testCancel_WhenPhoneDoesNotMatch_ShouldThrowIllegalArgumentException() {
     // Given
-    when(reservationRepo.findById(1L)).thenReturn(Optional.of(testReservation));
+    when(reservationRepo.findByIdWithLock(1L)).thenReturn(Optional.of(testReservation));
 
     // When & Then
     assertThrows(IllegalArgumentException.class,
@@ -243,7 +243,7 @@ class ReservationServiceTest {
   void testCancel_WhenStatusNotBooked_ShouldThrowIllegalStateException() {
     // Given
     testReservation.setStatus(ReservationStatus.COMPLETED);
-    when(reservationRepo.findById(1L)).thenReturn(Optional.of(testReservation));
+    when(reservationRepo.findByIdWithLock(1L)).thenReturn(Optional.of(testReservation));
 
     // When & Then
     assertThrows(IllegalStateException.class,
@@ -253,20 +253,20 @@ class ReservationServiceTest {
   @Test
   void testComplete_WhenValid_ShouldCompleteReservation() {
     // Given
-    when(reservationRepo.findById(1L)).thenReturn(Optional.of(testReservation));
+    when(reservationRepo.findByIdWithLock(1L)).thenReturn(Optional.of(testReservation));
 
     // When
     reservationService.complete(1L);
 
     // Then
     assertEquals(ReservationStatus.COMPLETED, testReservation.getStatus());
-    verify(reservationRepo, times(1)).findById(1L);
+    verify(reservationRepo, times(1)).findByIdWithLock(1L);
   }
 
   @Test
   void testComplete_WhenReservationNotFound_ShouldThrowEntityNotFoundException() {
     // Given
-    when(reservationRepo.findById(999L)).thenReturn(Optional.empty());
+    when(reservationRepo.findByIdWithLock(999L)).thenReturn(Optional.empty());
 
     // When & Then
     assertThrows(EntityNotFoundException.class, () -> reservationService.complete(999L));
